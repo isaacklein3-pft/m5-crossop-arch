@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M5 Cross-Operator Coordination and Communication Protocol Architecture</title>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --blue: #1b4f8a;
+    --accent: #2e7dbc;
+    --light-blue: #e8f1f8;
+    --green: #1a6b3c;
+    --light-green: #e8f5ee;
+    --red: #8b1a1a;
+    --light-red: #fdf0f0;
+    --amber: #7a4f00;
+    --light-amber: #fdf6e3;
+    --gray: #4a4a4a;
+    --light-gray: #f5f5f5;
+    --border: #d0d9e3;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--navy);
+    background: var(--white);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+  .cover {
+    border-top: 6px solid var(--accent);
+    border-bottom: 2px solid var(--border);
+    padding: 48px 0 36px;
+    margin-bottom: 48px;
+    text-align: center;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: var(--light-blue);
+    color: var(--blue);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    padding: 4px 12px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 25px;
+    font-weight: bold;
+    color: var(--navy);
+    line-height: 1.3;
+    margin-bottom: 12px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cover-sub { font-size: 14px; color: var(--gray); margin-bottom: 28px; }
+  .cover-meta {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+    font-size: 12px;
+    color: var(--gray);
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .cover-meta span strong { color: var(--navy); }
+  .toc {
+    background: var(--light-gray);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 28px;
+    margin-bottom: 48px;
+  }
+  .toc h2 { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 14px; font-family: sans-serif; }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc ol li { counter-increment: toc; padding: 4px 0; font-size: 13px; color: var(--gray); display: flex; align-items: baseline; gap: 8px; }
+  .toc ol li::before { content: counter(toc) "."; font-weight: bold; color: var(--accent); min-width: 18px; font-family: sans-serif; }
+  .toc ol li a { color: var(--navy); text-decoration: none; }
+  .toc ol li a:hover { color: var(--accent); text-decoration: underline; }
+  .section { margin-bottom: 56px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
+  .section-num { background: var(--accent); color: var(--white); font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .section-header h2 { font-size: 18px; color: var(--navy); line-height: 1.25; }
+  .subsection { margin-bottom: 28px; }
+  .subsection h3 { font-size: 14px; font-weight: bold; color: var(--blue); margin-bottom: 10px; font-family: sans-serif; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  p { margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px; }
+  th { background: var(--navy); color: var(--white); font-family: sans-serif; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--light-gray); }
+  tr:last-child td { border-bottom: 2px solid var(--accent); }
+  code { font-family: 'Courier New', monospace; font-size: 12px; background: #eef2f7; border: 1px solid #c8d8e8; border-radius: 3px; padding: 1px 5px; color: var(--navy); }
+  .callout { border-radius: 4px; padding: 14px 18px; margin-bottom: 16px; font-size: 13px; }
+  .callout.info { background: var(--light-blue); border-left: 4px solid var(--accent); color: var(--blue); }
+  .callout.warning { background: var(--light-amber); border-left: 4px solid #e0a800; color: var(--amber); }
+  .callout.critical { background: var(--light-red); border-left: 4px solid var(--red); color: var(--red); }
+  .callout.success { background: var(--light-green); border-left: 4px solid var(--green); color: var(--green); }
+  .callout strong { display: block; margin-bottom: 4px; font-family: sans-serif; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .flow { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; }
+  .flow-step { display: flex; align-items: stretch; gap: 0; }
+  .flow-connector { width: 40px; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .flow-connector .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); margin-top: 18px; flex-shrink: 0; z-index: 1; }
+  .flow-connector .line { width: 2px; flex-grow: 1; background: var(--border); }
+  .flow-box { flex-grow: 1; border: 1px solid var(--border); border-radius: 4px; padding: 12px 16px; margin: 4px 0; background: var(--white); }
+  .flow-box h4 { font-family: sans-serif; font-size: 12px; font-weight: bold; color: var(--navy); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .flow-box p { font-size: 12px; color: var(--gray); margin: 0; }
+  .matrix { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+  .matrix-cell { border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
+  .matrix-cell h4 { font-family: sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 8px; font-weight: bold; }
+  .matrix-cell ul { list-style: none; font-size: 12.5px; color: var(--gray); }
+  .matrix-cell ul li { padding: 2px 0; padding-left: 14px; position: relative; }
+  .matrix-cell ul li::before { content: "-"; position: absolute; left: 0; color: var(--accent); }
+  .permit-deny-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .permit-box { border-radius: 4px; padding: 16px; }
+  .permit-box.permitted { background: var(--light-green); border: 1px solid #a8d5b8; }
+  .permit-box.denied { background: var(--light-red); border: 1px solid #d5a8a8; }
+  .permit-box h4 { font-family: sans-serif; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .permit-box.permitted h4 { color: var(--green); }
+  .permit-box.denied h4 { color: var(--red); }
+  .permit-box ul { list-style: none; font-size: 12.5px; }
+  .permit-box ul li { padding: 3px 0; padding-left: 16px; position: relative; }
+  .permit-box.permitted ul li::before { content: "OK"; position: absolute; left: 0; color: var(--green); font-family: 'Courier New', monospace; font-size: 10px; font-weight: bold; }
+  .permit-box.denied ul li::before { content: "NO"; position: absolute; left: 0; color: var(--red); font-family: 'Courier New', monospace; font-size: 10px; font-weight: bold; }
+  .quorum-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .quorum-card { border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 4px; padding: 14px; text-align: center; }
+  .quorum-card .quorum-num { font-family: 'Courier New', monospace; font-size: 22px; font-weight: bold; color: var(--accent); }
+  .quorum-card .quorum-label { font-size: 11px; color: var(--gray); margin-top: 4px; font-family: sans-serif; }
+  .quorum-card .quorum-type { font-size: 12px; font-weight: bold; color: var(--navy); margin-top: 6px; font-family: sans-serif; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .appendix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .appendix-card { border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 4px; padding: 14px; font-size: 12px; }
+  .appendix-card h4 { font-family: sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--blue); margin-bottom: 8px; }
+  .appendix-card p { color: var(--gray); margin: 0; }
+  .footer { margin-top: 60px; border-top: 1px solid var(--border); padding-top: 20px; font-size: 11px; color: #888; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-badge">Post Fiat Superstructure Validator Platform</div>
+  <h1>M5 Cross-Operator Coordination and Communication Protocol Architecture</h1>
+  <div class="cover-sub">Multi-Operator Fleet Coordination for Live Institutional Validator Infrastructure</div>
+  <div class="cover-meta">
+    <span><strong>Phase:</strong> M5: Live Validator Operations</span>
+    <span><strong>Classification:</strong> Protocol Architecture Specification</span>
+    <span><strong>Version:</strong> 1.0, March 2026</span>
+    <span><strong>Alignment:</strong> Superstructure Validator Platform</span>
+  </div>
+</div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="callout info">
+  <strong>Document Purpose</strong>
+  This specification defines the coordination and communication protocols that allow multiple operators to function as a coherent validator fleet without any operator gaining visibility into another's custody state, signing infrastructure, or institutional relationships. Every coordination mechanism described here routes through the Middleware Layer (Layer 3). No direct operator-to-operator communication channel exists at any point in these protocols. This architecture extends the zero-custody boundary established in M2 and the operator isolation model established in M3 into the multi-operator coordination domain, which is the final architectural prerequisite before the validator network can scale beyond its founding cohort.
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">Inter-Operator Communication Boundaries and Permitted Channels</a>: enumerated permitted channels, data type restrictions, isolation guarantees</li>
+    <li><a href="#s2">Middleware-Mediated Coordination Architecture</a>: intermediary protocol design, direct connection restriction model, authentication and authorization</li>
+    <li><a href="#s3">Fleet-Level Upgrade Coordination</a>: rolling upgrade propagation, version negotiation, compatibility gates, rollback coordination</li>
+    <li><a href="#s4">Cross-Operator Failover Handoff Protocols</a>: handoff initiation, state transfer, custody boundary preservation, recovery confirmation</li>
+    <li><a href="#s5">Governance Signal Propagation Architecture</a>: quorum requirements, signal verification, dispute resolution, unilateral authority prevention</li>
+  </ol>
+</div>
+
+<!-- SECTION 1 -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <h2>Inter-Operator Communication Boundaries and Permitted Channels</h2>
+  </div>
+
+  <p>The fundamental rule governing inter-operator communication is that no operator communicates directly with another operator at any layer of the stack. All information that one operator needs about the state of another flows through the OCP coordination layer, which acts as the sole intermediary. This is not a policy preference: it is an architectural requirement. A direct channel between operators would create a surface through which one operator could probe, influence, or gain visibility into another's operational or custody state. The prohibition is enforced at the network layer, not just by policy.</p>
+
+  <div class="subsection">
+    <h3>1.1 Permitted Coordination Channels</h3>
+    <p>Three coordination channels exist. All three are OCP-mediated. None connect operators to each other.</p>
+    <table>
+      <tr><th>Channel</th><th>Channel ID</th><th>Direction</th><th>Operator Access</th><th>Data Permitted</th><th>Transport</th></tr>
+      <tr>
+        <td>OCP Admin Channel</td>
+        <td><code>CHAN_OCP_ADMIN</code></td>
+        <td>Operator to OCP; OCP to Operator (bidirectional per operator, isolated)</td>
+        <td>Each operator has an independent, isolated admin channel instance. Operator A cannot read Operator B's admin channel.</td>
+        <td>Maintenance declarations, patch acknowledgments, capacity reports, remediation plans, incident responses</td>
+        <td>mTLS 1.3, operator client certificate; certificate scoped to operator identity</td>
+      </tr>
+      <tr>
+        <td>OCP Coordination Broadcast</td>
+        <td><code>CHAN_OCP_BROADCAST</code></td>
+        <td>OCP to all operators (one-way broadcast; operators cannot write to this channel)</td>
+        <td>Read-only for all operators simultaneously; each operator receives the same payload; no operator-specific filtering</td>
+        <td>Upgrade notifications, governance proposals, network status events, fleet-wide alerts, rollback signals</td>
+        <td>mTLS 1.3 with OCP server certificate; operators authenticate as subscribers</td>
+      </tr>
+      <tr>
+        <td>OCP Telemetry Channel</td>
+        <td><code>CHAN_OCP_TELEMETRY</code></td>
+        <td>Operator to OCP (one-way upload; OCP does not return operator telemetry to other operators)</td>
+        <td>Write-only for operators; OCP aggregates telemetry from all operators but does not expose individual operator telemetry to peers</td>
+        <td>Health metrics, heartbeat signals, ceremony completion reports, binary integrity check results</td>
+        <td>mTLS 1.3; payload signed with operator telemetry signing key (scoped, per M5 Telemetry Framework)</td>
+      </tr>
+    </table>
+    <div class="callout critical">
+      <strong>No Fourth Channel Permitted</strong>
+      Any communication path between operators that does not route through one of these three OCP-mediated channels is prohibited. This includes: peer-to-peer messaging between operator nodes, shared configuration repositories accessible by multiple operators, out-of-band coordination via external services (Slack, email, shared dashboards), and any form of operator-to-operator API. Detection of an unauthorized inter-operator communication path is treated as a P1 security incident per M5 Security Hardening escalation procedures.
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>1.2 Permitted and Prohibited Data Types</h3>
+    <p>Even within the permitted channels, data types are explicitly enumerated. Anything not on the permitted list is not permitted. Ambiguous data types default to prohibited.</p>
+    <div class="permit-deny-grid">
+      <div class="permit-box permitted">
+        <h4>Permitted Data Types (OCP-Mediated Only)</h4>
+        <ul>
+          <li>Validator node identifier (public registry entry)</li>
+          <li>Operator identifier (public registry entry)</li>
+          <li>Health tier classification (healthy, degraded, critical, offline)</li>
+          <li>Upgrade version number and binary manifest hash (broadcast only)</li>
+          <li>Maintenance window declaration (timing and duration)</li>
+          <li>Governance proposal payload (OCP-constructed, broadcast)</li>
+          <li>Quorum vote result (aggregated by OCP; individual votes not shared)</li>
+          <li>Network participation rate (aggregate; not per-operator breakdown)</li>
+          <li>Ceremony completion count (aggregate; not per-operator breakdown)</li>
+          <li>Failover handoff notification (validator ID, handoff window, no custody data)</li>
+          <li>Rollback signal (affects all operators; not targeted at individuals)</li>
+        </ul>
+      </div>
+      <div class="permit-box denied">
+        <h4>Prohibited Data Types (Even via OCP)</h4>
+        <ul>
+          <li>Any key material, HSM reference, or custody system identifier</li>
+          <li>Per-operator signing ceremony logs or ceremony success rate</li>
+          <li>Per-operator telemetry data or health score</li>
+          <li>Operator infrastructure topology (IP addresses, host counts, region)</li>
+          <li>Individual operator CRS score or routing weight allocation</li>
+          <li>Operator identity of the institution relationship counterpart</li>
+          <li>Signing envelope content (payload or signed blob)</li>
+          <li>Operator incident history or security alert details</li>
+          <li>Binary version currently running on a specific operator's nodes</li>
+          <li>Per-operator capacity or resource utilization metrics</li>
+          <li>Any data that could allow one operator to fingerprint another's infrastructure</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout info">
+      <strong>Aggregate vs. Individual Data Distinction</strong>
+      The distinction between aggregate and individual data is structural, not statistical. Network participation rate (aggregate: 97.3% of all validators fulfilled slots this cycle) is permitted because it contains no information about any specific operator. Per-operator participation rate (Operator B fulfilled 94.1% of slots) is prohibited because it reveals information about Operator B's infrastructure to Operator A. OCP enforces this distinction at the data aggregation layer before broadcast: individual operator data never enters the broadcast payload.
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>1.3 Isolation Guarantees</h3>
+    <p>Isolation is enforced at four levels to ensure that the communication boundary holds even under adversarial conditions.</p>
+    <table>
+      <tr><th>Isolation Level</th><th>Mechanism</th><th>What It Prevents</th></tr>
+      <tr>
+        <td>Network isolation</td>
+        <td>Operator nodes have no direct network reachability to other operator nodes. Firewall allowlists permit only OCP endpoint addresses. Any connection attempt to a non-OCP address generates a P3 alert.</td>
+        <td>Direct TCP/IP connections between operator infrastructure.</td>
+      </tr>
+      <tr>
+        <td>Channel isolation</td>
+        <td>Each operator's admin channel instance is authenticated with an operator-specific mTLS certificate. OCP validates certificate identity on every request and rejects cross-operator certificate use.</td>
+        <td>Operator A using Operator B's credentials to read Operator B's admin channel.</td>
+      </tr>
+      <tr>
+        <td>Data aggregation isolation</td>
+        <td>OCP aggregates telemetry and health data before any broadcast. The aggregation layer strips operator identifiers from individual data points before computing network-wide figures.</td>
+        <td>Per-operator data leaking into broadcast payloads that all operators receive.</td>
+      </tr>
+      <tr>
+        <td>Custody isolation</td>
+        <td>Signing ceremony infrastructure (Layer 1: institution) is never referenced in any inter-operator coordination message. Handoff notifications carry validator identity only, not custody system references.</td>
+        <td>One operator inferring which HSM or custody system another operator's institution uses.</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 2 -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <h2>Middleware-Mediated Coordination Architecture</h2>
+  </div>
+
+  <p>The middleware coordination layer is the OCP component that brokers all cross-operator communication. It is the only entity in the architecture that holds a complete view of the operator fleet: which operators are active, what health states each node is in, what governance proposals are pending. This concentrated visibility is what makes middleware-mediation powerful and what makes it a security-critical component. The design constrains what the middleware does with that visibility just as carefully as it constrains what operators can do.</p>
+
+  <div class="subsection">
+    <h3>2.1 Intermediary Service Design</h3>
+    <p>The OCP coordination layer runs three distinct sub-services, each with a narrowly scoped function. No sub-service has access to data outside its defined scope.</p>
+    <table>
+      <tr><th>Sub-Service</th><th>Service ID</th><th>Scope</th><th>Data Access</th><th>Output</th></tr>
+      <tr>
+        <td>Fleet State Aggregator</td>
+        <td><code>OCP_FSA</code></td>
+        <td>Collects telemetry from all operators, computes aggregate fleet health metrics, maintains per-node health tier state</td>
+        <td>Read: all operator telemetry channels. Write: OCP metric store. No write access to broadcast channel.</td>
+        <td>Aggregate fleet health records; per-node health tier transitions; inputs to OCP health scoring engine (M5 Telemetry Framework)</td>
+      </tr>
+      <tr>
+        <td>Coordination Broadcast Service</td>
+        <td><code>OCP_CBS</code></td>
+        <td>Constructs and distributes broadcast payloads to all operators simultaneously; enforces data type restrictions before broadcast</td>
+        <td>Read: OCP_FSA aggregate outputs only (not individual telemetry). Write: broadcast channel. No access to per-operator admin channels.</td>
+        <td>Upgrade notifications, governance proposals, fleet alerts, rollback signals; all payloads signed with OCP broadcast signing key</td>
+      </tr>
+      <tr>
+        <td>Handoff Coordination Service</td>
+        <td><code>OCP_HCS</code></td>
+        <td>Manages planned and unplanned validator handoffs between operators; constructs handoff notifications; coordinates routing weight transfers</td>
+        <td>Read: OCP node registry (validator identities, operator assignments, routing weights). Write: per-operator admin channels (targeted notifications). No access to telemetry or custody data.</td>
+        <td>Handoff initiation notices, handoff completion confirmations, routing weight update instructions to OCP routing engine</td>
+      </tr>
+    </table>
+    <p>The three sub-services do not share a database or a runtime process. Each reads from a defined set of OCP data stores with read-only access scoped to its function. A compromise of <code>OCP_CBS</code> does not grant access to per-operator admin channel data because <code>OCP_CBS</code> has no read access to admin channels. Separation at the data access layer means a partial middleware compromise does not automatically compromise all coordination functions.</p>
+  </div>
+
+  <div class="subsection">
+    <h3>2.2 Direct Operator-to-Operator Restriction Model</h3>
+    <p>The restriction model is enforced at four layers. All four must be active simultaneously. Enforcement at any single layer is not sufficient, because a sufficiently determined operator could attempt to bypass a single-layer restriction.</p>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line" style="visibility:hidden"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Layer 1: Network Firewall Enforcement</h4>
+          <p>Operator nodes are on isolated network segments with allowlist-only egress per M5 Security Hardening Section 1.2. The allowlist contains OCP endpoints only. No operator node IP address range appears in any other operator's allowlist. Network-layer enforcement means even a misconfigured operator process cannot accidentally reach another operator's infrastructure.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Layer 2: OCP Certificate Authority Control</h4>
+          <p>All OCP-mediated connections use mTLS with certificates issued by the OCP certificate authority. OCP CA issues operator certificates scoped to specific channel types: an admin channel certificate cannot authenticate to the telemetry endpoint, and vice versa. The OCP CA does not issue certificates that would authorize operator-to-operator connections, because no such connection type is defined in the certificate policy. A certificate presented for an undefined connection type is rejected without logging the attempt as a valid authentication event.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Layer 3: OCP Application-Layer Authorization</h4>
+          <p>Every request to any OCP endpoint is validated against an authorization policy that specifies permitted operations per operator identity. The policy is managed by OCP, not by operators. An operator cannot modify their own authorization scope. Requests for operations outside the defined scope return <code>ERR_OP_NOT_AUTHORIZED</code> and are logged to the OCP audit trail with the requesting operator identity and the attempted operation.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Layer 4: Data Aggregation Firewall</h4>
+          <p>The <code>OCP_CBS</code> broadcast service enforces the data type restrictions from Section 1.2 before any payload is constructed. Individual operator identifiers are stripped from all data before aggregation output is generated. A broadcast payload is checked against the prohibited data type list before transmission. Any payload containing a prohibited data type is rejected and the operator who triggered the payload generation receives <code>ERR_DATA_PROHIBITED</code> through their admin channel.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>2.3 Authentication and Authorization Requirements for Middleware Access</h3>
+    <table>
+      <tr><th>Access Type</th><th>Authentication Mechanism</th><th>Authorization Scope</th><th>Session Duration</th><th>Revocation</th></tr>
+      <tr>
+        <td>Admin channel access</td>
+        <td>mTLS with operator-specific admin certificate (OCP CA issued); certificate includes operator identifier in Subject field</td>
+        <td>Operator's own admin channel only; scoped to permitted admin operations list; cannot read other operators' channels</td>
+        <td>30-minute session tokens; re-authentication required on expiry</td>
+        <td>Certificate revocation via OCP CA CRL; effective within 60 seconds of revocation</td>
+      </tr>
+      <tr>
+        <td>Telemetry channel write access</td>
+        <td>mTLS with operator telemetry signing key; payload additionally signed with telemetry key per M5 Telemetry Framework</td>
+        <td>Write-only to telemetry ingestion endpoint; no read access to any telemetry data (including own data after ingestion)</td>
+        <td>Per-payload authentication; no persistent session</td>
+        <td>Telemetry signing key rotation via root-gated signing ceremony (M3 key rotation procedure)</td>
+      </tr>
+      <tr>
+        <td>Broadcast channel subscription</td>
+        <td>mTLS with operator broadcast subscription certificate (distinct from admin certificate)</td>
+        <td>Read-only subscription to broadcast payloads; all operators receive identical payloads; cannot filter or request specific payloads</td>
+        <td>Persistent subscription; re-authentication on certificate expiry (90-day certificate lifetime)</td>
+        <td>OCP removes operator from subscriber list; broadcast continues to remaining subscribers without interruption</td>
+      </tr>
+      <tr>
+        <td>OCP engineering access (OCP staff only)</td>
+        <td>Hardware token MFA; OCP internal certificate; access logged to immutable audit trail</td>
+        <td>All OCP sub-services; access scope defined per engineer role; no production data modification without dual-approval workflow</td>
+        <td>Session-scoped; 8-hour maximum; MFA re-prompt after 4 hours</td>
+        <td>Immediate: HR system integration triggers automatic certificate revocation on role change</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 3 -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <h2>Fleet-Level Upgrade Coordination</h2>
+  </div>
+
+  <p>Fleet-level upgrades present a coordination challenge specific to the zero-custody architecture: the signing binary that validators run must be updated across all operators without requiring operators to coordinate directly, without synchronizing signing ceremony windows across institutions, and without leaving the network in a state where some validators run an incompatible binary version and cannot participate in signing with others.</p>
+
+  <div class="subsection">
+    <h3>3.1 Rolling Upgrade Propagation</h3>
+    <p>Upgrades propagate in three waves, with OCP holding the gate between each wave. Operators do not know which wave they are in until OCP notifies them; the wave assignment is made by OCP based on operator health score, patch currency, and fleet diversity to ensure the network retains sufficient healthy validators throughout the upgrade.</p>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line" style="visibility:hidden"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Wave 0: Upgrade Authorization (Institution Signing Ceremony)</h4>
+          <p>OCP constructs a binary upgrade authorization payload: new binary manifest hash, version identifier, compatibility matrix, and rollback binary hash. This is a root-gated action. OCP delivers signing ceremony envelopes to all participating institutions simultaneously via the standard M3 ceremony pathway. Each institution applies Maker/Checker/Reviewer process independently. Upgrade authorization requires quorum institution sign-off (threshold defined in Section 5.1) before any binary is distributed to operators. No operator receives the new binary before institution quorum is confirmed. Wave 0 has no time pressure: it runs on institution ceremony timelines, not operator maintenance windows.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Wave 1: First 25% of Operators (4-Hour Observation Window)</h4>
+          <p>OCP selects the Wave 1 operator set using three criteria: operators with the highest current health score (least risk of compounding an existing problem), operators with the most diverse validator types relative to each other (to limit correlated failure), and operators who have most recently completed successful patch cycles (freshest patch currency signal). OCP notifies Wave 1 operators via admin channel with a 2-hour preparation window before the upgrade is pushed. Operators confirm readiness through the admin channel. OCP pushes the new binary manifest to Wave 1 nodes. Secure boot verification confirms binary hash against the manifest on each node before the process starts. OCP monitors Wave 1 for 4 hours before opening Wave 2.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Wave 2: Next 50% of Operators (2-Hour Observation Window)</h4>
+          <p>Wave 2 proceeds only if Wave 1 passes the observation gate: all Wave 1 nodes must be in healthy or degraded tier after 4 hours, no P1 or P2 incidents attributed to the upgrade, and ceremony success rate on Wave 1 nodes is at or above pre-upgrade baseline. If the gate passes, OCP notifies Wave 2 operators. The observation window for Wave 2 is 2 hours (compressed relative to Wave 1 because Wave 1 data provides confidence). Emergency upgrades use a 1-hour Wave 1 observation window as specified in M5 Security Hardening fleet patch procedures.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Wave 3: Remaining Operators (Completion Confirmation)</h4>
+          <p>After Wave 2 gate passes, remaining operators receive the upgrade. OCP generates a fleet attestation report after all operators complete: confirms every active node is running the authorized binary version per their registered manifest hash. Report is delivered to all institutions via the institutional gateway and retained in the OCP immutable audit store. Operators can verify their own binary version via admin channel attestation query; they cannot query other operators' versions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>3.2 Version Negotiation Protocol</h3>
+    <p>Version negotiation is not operator-to-operator. OCP maintains the authoritative version registry and resolves compatibility questions on behalf of the fleet.</p>
+    <table>
+      <tr><th>Negotiation Event</th><th>Initiator</th><th>OCP Role</th><th>Operator Action Required</th><th>Outcome on Failure</th></tr>
+      <tr>
+        <td>New version availability broadcast</td>
+        <td>OCP (post-institution-quorum)</td>
+        <td>Broadcasts new version identifier and compatibility matrix to all operators via <code>CHAN_OCP_BROADCAST</code></td>
+        <td>Operator acknowledges receipt via admin channel within 4 hours; no version selection required</td>
+        <td>Non-acknowledging operator receives escalating reminders; patch currency score degrades after 24 hours</td>
+      </tr>
+      <tr>
+        <td>Version compatibility check</td>
+        <td>OCP (pre-wave assignment)</td>
+        <td>Checks each operator's current binary version against compatibility matrix; flags operators running incompatible versions</td>
+        <td>Operators running out-of-support versions receive mandatory upgrade notification with a 48-hour remediation window</td>
+        <td>Operators not remediated within 48 hours have signing ceremony acceptance suspended until upgrade completes</td>
+      </tr>
+      <tr>
+        <td>Cross-version signing ceremony compatibility</td>
+        <td>OCP (on each ceremony request)</td>
+        <td>Validates that the signing ceremony envelope format is compatible with the requesting node's binary version; rejects envelopes that require features not present in the node's version</td>
+        <td>None; OCP handles compatibility silently for compatible versions</td>
+        <td>Incompatible ceremony request returns <code>ERR_VERSION_INCOMPATIBLE</code>; operator notified via admin channel</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <h3>3.3 Rollback Coordination</h3>
+    <p>Rollback is triggered by OCP when Wave 1 or Wave 2 observation gates fail. No individual operator can trigger a fleet-wide rollback; only OCP can issue a fleet rollback signal through the broadcast channel. An operator can roll back their own node independently via the admin channel (self-rollback), but self-rollback does not affect other operators.</p>
+    <table>
+      <tr><th>Rollback Type</th><th>Trigger</th><th>OCP Action</th><th>Operator Action</th><th>Institution Notification</th></tr>
+      <tr>
+        <td>Fleet rollback</td>
+        <td>Wave gate failure: any P1 incident attributed to upgrade on Wave 1 or Wave 2, or Wave health score degradation below threshold across 2+ operators</td>
+        <td>Broadcasts rollback signal with rollback binary manifest hash to all operators via <code>CHAN_OCP_BROADCAST</code>; updates authorized version in OCP registry to rollback version</td>
+        <td>Apply rollback binary; confirm via secure boot verification; report completion via admin channel within 2 hours</td>
+        <td>All institutions notified via gateway: rollback triggered, reason code, estimated resolution timeline</td>
+      </tr>
+      <tr>
+        <td>Operator self-rollback</td>
+        <td>Operator identifies local issue with new binary; initiates rollback via admin channel</td>
+        <td>OCP logs self-rollback; adjusts patch currency signal for the operator; does not trigger fleet-wide rollback unless multiple operators self-rollback within 60 minutes</td>
+        <td>Apply rollback binary; notify OCP via admin channel with reason code and symptom description</td>
+        <td>Institution notified if self-rollback accompanies health tier degradation</td>
+      </tr>
+      <tr>
+        <td>Coordinated rollback trigger (multiple self-rollbacks)</td>
+        <td>3 or more operators self-rollback within a 60-minute window</td>
+        <td>OCP elevates to fleet rollback automatically; broadcasts rollback signal; opens investigation into shared upgrade failure cause</td>
+        <td>Same as fleet rollback</td>
+        <td>All institutions notified; OCP generates post-rollback incident report within 48 hours</td>
+      </tr>
+    </table>
+    <div class="callout warning">
+      <strong>Synchronized Signing Window Avoidance</strong>
+      The rolling wave design explicitly prevents the need for synchronized signing windows across operators during upgrades. Because each wave upgrades a subset of the fleet while others remain on the previous version, ceremonies continue to route to non-upgrading operators throughout the upgrade window. The version compatibility check ensures that mixed-version fleets can still process signing ceremonies: OCP routes ceremony requests to operators running a compatible version during the transition period. No institution is asked to hold or reschedule a signing ceremony because of an upgrade in progress on another operator's node.
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 4 -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <h2>Cross-Operator Failover Handoff Protocols</h2>
+  </div>
+
+  <p>A failover handoff transfers validator operational responsibilities from one operator to another. Two handoff types exist: planned maintenance handoffs (initiated by the outgoing operator) and unplanned outage handoffs (initiated by OCP when a node enters offline tier). Both types preserve the zero-custody architecture throughout. The institution's signing keys stay in the institution's custody environment regardless of which operator is currently running the validator. The handoff transfers operational responsibility, not custody.</p>
+
+  <div class="subsection">
+    <h3>4.1 Planned Maintenance Handoff</h3>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line" style="visibility:hidden"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Step 1: Maintenance Declaration (Outgoing Operator, T-48h minimum)</h4>
+          <p>The outgoing operator submits a maintenance declaration via <code>CHAN_OCP_ADMIN</code> specifying: validator node identifier(s) affected, planned maintenance window start and end times, and the nature of the maintenance (routine, upgrade, hardware replacement, decommission). The declaration does not name the incoming operator; OCP selects the receiving operator from the active operator pool based on current health score and available capacity. The outgoing operator has no visibility into which operator OCP selects. OCP acknowledges the declaration and registers a <code>maintenanceDeclared</code> flag in the OCP node registry for the affected validators.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Step 2: Receiving Operator Selection and Notification (OCP, T-24h)</h4>
+          <p>OCP selects the receiving operator using the same criteria as Wave 1 upgrade selection: highest health score among eligible operators with sufficient capacity headroom. The receiving operator is notified via their admin channel with: the validator node identifier, the handoff window timing, and configuration parameters needed to stand up the replacement node (software version, network configuration, endpoint addresses). No custody information is included. The receiving operator does not learn the identity of the outgoing operator from this notification; they learn only the validator identity and operational parameters.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Step 3: Parallel Readiness Verification (OCP, T-2h)</h4>
+          <p>The receiving operator stands up a warm standby node and confirms readiness to OCP via admin channel. OCP verifies the standby node through secure boot attestation (binary hash matches authorized manifest), telemetry continuity (at least 5 consecutive heartbeat cycles from the standby node), and health score (standby node must be in healthy tier). The institution is notified via gateway that a handoff is scheduled; no institution action is required for planned maintenance handoffs.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Step 4: Weight Transfer (OCP, at handoff window start)</h4>
+          <p>OCP executes the routing weight transfer: outgoing operator's weight is set to 0 for the affected validator; receiving operator's weight increases by the transferred amount, subject to the 60% single-operator cap. The transfer is atomic within the OCP routing engine: there is no window where the validator has zero weight across both operators. Signing ceremonies for the affected validator are suspended for a maximum of 30 seconds during the weight transfer. If the 30-second suspension would create a ceremony backlog that threatens network throughput, OCP routes pending ceremonies to other validators in the fleet and clears the backlog before executing the transfer.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Step 5: Recovery Confirmation (OCP, T+30m post-handoff)</h4>
+          <p>OCP monitors the receiving operator's node for 30 minutes after the weight transfer completes. Confirmation criteria: node remains in healthy tier for 30 minutes, ceremony success rate on the new node meets or exceeds the pre-handoff baseline, and no P1 or P2 incidents are generated. After confirmation, OCP closes the maintenance record and notifies both operators via their respective admin channels (outgoing operator receives a completion confirmation; receiving operator receives a full-activation confirmation). Institution receives a handoff completion notice via gateway.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>4.2 Unplanned Outage Handoff</h3>
+    <p>Unplanned outage handoffs are initiated automatically by OCP when a validator node enters offline tier per the M5 Telemetry Health Scoring Framework. The protocol is compressed relative to planned handoffs because there is no preparation window.</p>
+    <table>
+      <tr><th>Step</th><th>Trigger / Timing</th><th>OCP Action</th><th>Operator Action</th><th>Institution Notification</th></tr>
+      <tr>
+        <td>1. Offline tier detection</td>
+        <td>NODE_FRESHNESS_multiplier = 0 (90s gap) or NODE_INTEGRITY fail</td>
+        <td>Offline tier assigned; M5 Security Hardening isolation procedure initiated in parallel with handoff protocol</td>
+        <td>Outgoing operator receives P1 alert via PagerDuty</td>
+        <td>Yes: P1 alert, validator offline status, handoff initiated</td>
+      </tr>
+      <tr>
+        <td>2. Emergency receiving operator selection</td>
+        <td>T+0 from offline tier detection</td>
+        <td>OCP selects receiving operator by highest health score among operators with confirmed warm standby capacity; if no warm standby is available, OCP enters safe degraded state and escalates</td>
+        <td>Receiving operator is notified via admin channel; receives same operational parameters as planned handoff (no custody data)</td>
+        <td>Institution notified of receiving operator selection</td>
+      </tr>
+      <tr>
+        <td>3. Emergency standby activation</td>
+        <td>T+5m target; T+15m maximum</td>
+        <td>OCP verifies receiving operator's standby node via secure boot attestation and telemetry; weight transfer executed on verification</td>
+        <td>Receiving operator activates standby node; confirms readiness via admin channel</td>
+        <td>Institution notified when weight transfer completes</td>
+      </tr>
+      <tr>
+        <td>4. Outgoing operator remediation window</td>
+        <td>T+30m from offline detection</td>
+        <td>OCP notifies outgoing operator of remediation SLA: 4-hour window to diagnose and report root cause; 24-hour window to restore node to healthy tier or formally decommission</td>
+        <td>Outgoing operator submits incident report via admin channel; begins remediation or decommission process</td>
+        <td>Institution informed of remediation SLA; receives updates if SLA breaches occur</td>
+      </tr>
+      <tr>
+        <td>5. Return-to-operations or decommission</td>
+        <td>Per M5 Security Hardening clearance sequence</td>
+        <td>If outgoing operator remediates: full clearance sequence required before routing weight is restored. If decommission: root-gated signing ceremony required per M3 deregistration procedure.</td>
+        <td>Operator completes clearance or decommission per respective procedure</td>
+        <td>Institution authorization required for ceremony-gated steps in either path</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <h3>4.3 Custody Boundary Preservation During Handoff</h3>
+    <p>The zero-custody boundary does not change during a handoff. The following invariants hold throughout every handoff type.</p>
+    <div class="callout success">
+      <strong>Custody Invariants: Maintained at All Times Including During Handoff</strong>
+      (1) The institution's private signing keys remain in the institution's custody environment (HSM, air-gapped system, or institutional multisig) regardless of which operator is running the validator. Keys are never transferred between operators. Keys are never transferred to OCP. (2) The incoming operator receives no information about the outgoing operator's infrastructure, signing ceremony history, or custody system configuration. (3) Signing ceremony envelopes are constructed by OCP and delivered to the institution; they are not relayed through the outgoing or incoming operator. (4) If the handoff is due to a security incident, forensic evidence from the outgoing operator's node is preserved per the M5 Security Hardening chain-of-custody procedure before any process on that node is terminated.
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SECTION 5 -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <h2>Governance Signal Propagation Architecture</h2>
+  </div>
+
+  <p>Governance decisions affecting the operator fleet (parameter changes, operator additions and removals, policy updates, protocol upgrades) must propagate to all operators in a way that is verifiable, auditable, and resistant to unilateral authority by any single participant. The governance propagation architecture extends the coordination model from M3 Founding Cohort Governance into multi-operator fleet operation, where the cohort may grow beyond the founding members.</p>
+
+  <div class="subsection">
+    <h3>5.1 Quorum Requirements by Decision Type</h3>
+    <div class="quorum-grid">
+      <div class="quorum-card">
+        <div class="quorum-num">50%+1</div>
+        <div class="quorum-type">Simple Majority</div>
+        <div class="quorum-label">Parameter changes within defined bounds; routine policy updates; scheduling adjustments</div>
+      </div>
+      <div class="quorum-card">
+        <div class="quorum-num">66%</div>
+        <div class="quorum-type">Supermajority</div>
+        <div class="quorum-label">New operator admission; protocol upgrades; changes to governance quorum thresholds themselves</div>
+      </div>
+      <div class="quorum-card">
+        <div class="quorum-num">100%</div>
+        <div class="quorum-type">Unanimous</div>
+        <div class="quorum-label">Operator removal; changes to custody boundary definitions; modifications to the zero-custody architecture</div>
+      </div>
+    </div>
+    <p>Quorum is calculated across active institutions, not across operators. An institution with multiple active validators counts as one vote. This prevents an operator running many validators from having proportionally more governance influence than an operator running fewer. Quorum thresholds apply to voting institutions, not to operator count: a 66% threshold requires 66% of enrolled institutions to sign, regardless of how many validator nodes those institutions collectively authorize.</p>
+    <div class="callout warning">
+      <strong>Quorum Calculation During Reduced Cohort</strong>
+      If one or more institutions are in an offline or critical validator state at the time a governance vote is called, the quorum denominator is the count of institutions with at least one healthy or degraded validator, not the total enrolled institution count. This prevents a governance deadlock where a single offline institution blocks a required unanimous vote indefinitely. The quorum adjustment is logged in the OCP governance record for the vote. Any institution that was excluded from a quorum calculation due to validator state receives a notification and may submit a dissenting record to the governance log within 72 hours of the vote completing.
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>5.2 Governance Signal Propagation Protocol</h3>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line" style="visibility:hidden"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Stage 1: Proposal Origination (OCP Governance Service)</h4>
+          <p>Governance proposals originate from two sources: OCP (for protocol-level changes like upgrades or parameter adjustments) or institutions (for operator-level changes like additions or removals). Operator-originated proposals are not permitted: operators submit requests to OCP through the admin channel, and OCP evaluates whether to formalize the request as a governance proposal. An operator requesting their own removal or another operator's removal submits a formal request to OCP; OCP constructs the proposal independently if the request meets threshold criteria. This prevents an operator from constructing a self-serving governance payload and broadcasting it directly to institutions.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Stage 2: Proposal Broadcast (OCP_CBS, Simultaneous Delivery)</h4>
+          <p>OCP constructs the governance proposal payload: proposal identifier (UUID), proposal type and quorum threshold required, proposal content, voting deadline, and a proposal content hash (SHA-256). The payload is signed with OCP's governance signing key. <code>OCP_CBS</code> delivers the payload to all operators via the broadcast channel simultaneously. Operators cannot respond to the proposal: their role in governance propagation is to ensure their validator nodes remain operational so their institution can vote. The institution receives the proposal directly through the institutional gateway, not relayed through the operator.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Stage 3: Institution Independent Evaluation and Signing</h4>
+          <p>Each institution evaluates the proposal through its internal Maker/Checker/Reviewer process. The Reviewer role is non-waivable for all governance votes. Institutions vote by submitting a signed vote envelope via the standard signing ceremony pathway: OCP constructs the vote envelope, the institution signs inside their custody environment, and OCP receives the signed blob. Institutions cannot see how other institutions have voted before the voting deadline. OCP withholds vote tally information until the deadline passes. This prevents a bandwagon effect where late voters adjust their position based on early results.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Stage 4: Quorum Determination and Result Broadcast</h4>
+          <p>After the voting deadline, OCP tallies signed votes, verifies each vote envelope's signature and freshness, and determines whether the quorum threshold was met. The result payload contains: proposal identifier, final vote count (yes/no/abstain), quorum threshold applied, quorum met (yes/no), and the list of institutions that voted (not how they voted: vote direction is private; participation is public). The result is broadcast via <code>CHAN_OCP_BROADCAST</code> to all operators and delivered to all institutions via the gateway. If quorum was met, OCP schedules the implementation action.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+        <div class="flow-box">
+          <h4>Stage 5: Implementation (Root-Gated Action for Applicable Decision Types)</h4>
+          <p>For decisions that require a root-gated action (operator deregistration, protocol upgrade, custody boundary change), OCP constructs the implementation signing ceremony envelope after quorum confirmation. The envelope references the governance proposal identifier so institutions know exactly which vote outcome they are authorizing at the implementation stage. Institutions that voted against a passed proposal still receive the implementation ceremony; they may decline to sign, which generates a governance dispute record. The dispute resolution process is defined in Section 5.4.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <h3>5.3 Signal Verification</h3>
+    <p>Every governance signal is verified at three levels before it affects any network state.</p>
+    <table>
+      <tr><th>Verification Level</th><th>What Is Verified</th><th>Verification Mechanism</th><th>Failure Consequence</th></tr>
+      <tr>
+        <td>Proposal authenticity</td>
+        <td>Proposal payload was constructed and signed by OCP governance service; has not been modified in transit</td>
+        <td>OCP governance signing key signature; SHA-256 content hash verified by receiving institutions independently</td>
+        <td>Tampered proposal rejected; OCP generates P2 alert; investigation into tamper attempt</td>
+      </tr>
+      <tr>
+        <td>Vote envelope authenticity</td>
+        <td>Each institution's vote envelope was signed inside their custody environment by their institutional signing key</td>
+        <td>Ed25519 signature verification; envelope freshness within 120-second window; nonce not in 30-day retention log</td>
+        <td>Invalid vote envelope rejected; institution notified via gateway; does not count toward quorum; institution may resubmit within voting window</td>
+      </tr>
+      <tr>
+        <td>Implementation authorization</td>
+        <td>The implementation ceremony envelope was signed by the required quorum of institutions after seeing the final vote result</td>
+        <td>Same ceremony verification as all root-gated actions: signature, freshness, nonce, M/C/R; plus governance proposal ID cross-reference in OCP governance log</td>
+        <td>Implementation blocked until valid quorum of implementation signatures received; OCP escalates to governance dispute if implementation signatures are not received within 72 hours of quorum confirmation</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <h3>5.4 Dispute Resolution Mechanisms</h3>
+    <p>Governance disputes arise when a passed proposal's implementation is blocked by insufficient implementation ceremony signatures, when an institution challenges the quorum calculation methodology, or when a new operator admission is contested. No operator has standing to file a governance dispute; disputes are filed by institutions through the institutional gateway.</p>
+    <table>
+      <tr><th>Dispute Type</th><th>Filing Party</th><th>Filing Window</th><th>Resolution Path</th><th>Maximum Duration</th></tr>
+      <tr>
+        <td>Quorum calculation challenge</td>
+        <td>Any institution that participated in the vote</td>
+        <td>72 hours after result broadcast</td>
+        <td>OCP provides full quorum calculation record including which institutions were counted, their validator states at vote time, and the quorum denominator logic. Challenging institution reviews and may accept or escalate to cohort arbitration.</td>
+        <td>14 days from filing to resolution</td>
+      </tr>
+      <tr>
+        <td>Implementation refusal (institution declines to sign implementation ceremony)</td>
+        <td>OCP (automatic: triggered when implementation signatures do not reach quorum within 72 hours)</td>
+        <td>Automatic after 72-hour deadline</td>
+        <td>OCP identifies which institutions have not submitted implementation signatures. A mediation window of 7 days opens where refusing institutions may provide a formal objection record. If objection is substantive, OCP may call a re-vote on the specific implementation detail. If no substantive objection is recorded, refusing institutions' validator signing ceremony access may be suspended per cohort policy.</td>
+        <td>21 days from implementation deadline</td>
+      </tr>
+      <tr>
+        <td>Operator admission contest</td>
+        <td>Any institution holding a governance vote on the admission</td>
+        <td>During voting window only</td>
+        <td>Institution submits a formal objection record to OCP with specific grounds. OCP circulates the objection to all voting institutions as a supplement to the original proposal. Vote continues with objection record appended to the proposal record. Objection does not pause the vote or change the quorum threshold.</td>
+        <td>Resolved at voting deadline</td>
+      </tr>
+    </table>
+    <div class="callout info">
+      <strong>Unilateral Authority Prevention</strong>
+      No single party holds unilateral authority over any governance outcome. OCP can originate proposals but cannot vote on them; OCP does not hold a signing key that counts toward institution quorum. Institutions can vote but cannot originate proposals unilaterally; a single institution cannot call a vote that OCP refuses to formalize. Operators have no governance standing: they cannot originate proposals, vote, or dispute outcomes. The cohort's governance authority is distributed across institutions with the quorum thresholds in Section 5.1 as the mathematical guarantee that no minority can impose a decision on the majority, and no majority can permanently exclude a minority without clearing the relevant quorum bar.
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- APPENDIX -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num" style="background: var(--gray);">A</div>
+    <h2>Appendix: Reference Constants and Cross-Spec Integration</h2>
+  </div>
+
+  <div class="subsection">
+    <h3>A.1 Protocol Constants Summary</h3>
+    <table>
+      <tr><th>Constant</th><th>Value</th><th>Source</th></tr>
+      <tr><td>Permitted inter-operator coordination channels</td><td>3: OCP Admin, OCP Broadcast, OCP Telemetry</td><td>M5 (this document)</td></tr>
+      <tr><td>Direct operator-to-operator connections</td><td>0: prohibited at network, certificate, application, and data layers</td><td>M5 (this document)</td></tr>
+      <tr><td>Upgrade Wave 1 observation window</td><td>4 hours (1 hour for emergency upgrades)</td><td>M5 (this document); consistent with M5 Security Hardening fleet patch</td></tr>
+      <tr><td>Upgrade Wave 2 observation window</td><td>2 hours</td><td>M5 (this document)</td></tr>
+      <tr><td>Coordinated rollback trigger threshold</td><td>3 or more operator self-rollbacks within 60 minutes</td><td>M5 (this document)</td></tr>
+      <tr><td>Planned maintenance declaration lead time</td><td>48 hours minimum</td><td>M5 (this document)</td></tr>
+      <tr><td>Unplanned handoff emergency standby activation target</td><td>5 minutes target; 15 minutes maximum</td><td>M5 (this document)</td></tr>
+      <tr><td>Post-handoff monitoring confirmation window</td><td>30 minutes</td><td>M5 (this document)</td></tr>
+      <tr><td>Handoff weight transfer ceremony suspension maximum</td><td>30 seconds</td><td>M5 (this document); consistent with M3 failover SLA</td></tr>
+      <tr><td>Governance simple majority threshold</td><td>50% + 1 of active institutions</td><td>M5 (this document)</td></tr>
+      <tr><td>Governance supermajority threshold</td><td>66% of active institutions</td><td>M5 (this document)</td></tr>
+      <tr><td>Governance unanimous threshold</td><td>100% of active institutions</td><td>M5 (this document)</td></tr>
+      <tr><td>Vote tally visibility</td><td>Withheld from all institutions until voting deadline</td><td>M5 (this document)</td></tr>
+      <tr><td>Implementation signature window (post-quorum)</td><td>72 hours before dispute trigger</td><td>M5 (this document)</td></tr>
+      <tr><td>Quorum challenge filing window</td><td>72 hours after result broadcast</td><td>M5 (this document)</td></tr>
+      <tr><td>Admin channel session token duration</td><td>30 minutes; re-authentication on expiry</td><td>M5 (this document)</td></tr>
+      <tr><td>Broadcast subscription certificate lifetime</td><td>90 days</td><td>M5 (this document)</td></tr>
+      <tr><td>Single-operator routing weight cap</td><td>60%</td><td>M3 Routing Logic (unchanged)</td></tr>
+      <tr><td>Minimum active operators</td><td>2 (no override)</td><td>M3 Routing Logic (unchanged)</td></tr>
+      <tr><td>Signing envelope freshness window</td><td>120 seconds</td><td>M3 Institutional Deployment Pathway (unchanged)</td></tr>
+      <tr><td>Nonce retention period</td><td>30 days minimum</td><td>M3 Institutional Deployment Pathway (unchanged)</td></tr>
+      <tr><td>Maker/Checker/Reviewer: Reviewer waivable</td><td>No: Reviewer non-waivable for all root-gated actions including governance implementation ceremonies</td><td>M2/M3 (unchanged)</td></tr>
+    </table>
+  </div>
+
+  <div class="appendix-grid">
+    <div class="appendix-card">
+      <h4>M2/M3 Integration Points</h4>
+      <p>Zero-custody boundary applies throughout all handoff and coordination protocols. Root-gated signing ceremony pathway (M3) used for upgrade authorization, governance implementation, operator deregistration, and return-to-operations clearance. CRS routing weight (M3) updated by OCP_HCS during handoffs. 60% cap and 2-operator minimum enforced during all weight transfers.</p>
+    </div>
+    <div class="appendix-card">
+      <h4>M5 Security Hardening Integration</h4>
+      <p>Network isolation and firewall policies (M5 SH Section 1.2) enforce the no-direct-operator-connection rule at the network layer. Fleet patch coordination in this document extends M5 SH Section 5.3 fleet-wide patch procedure. Unplanned handoff protocol runs in parallel with M5 SH isolation and forensic capture procedures: evidence preservation takes precedence over handoff timing on the outgoing operator's node.</p>
+    </div>
+    <div class="appendix-card">
+      <h4>M5 Telemetry Framework Integration</h4>
+      <p>Health tier states (healthy, degraded, critical, offline) from M5 Telemetry Framework drive unplanned handoff triggers, Wave operator selection criteria, and quorum denominator calculation during governance votes. OCP_FSA aggregate outputs feed into broadcast payloads. Per-operator health data is never included in broadcast payloads per data type restrictions in Section 1.2.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>Post Fiat Superstructure Validator Platform: M5 Cross-Operator Coordination and Communication Protocol Architecture, v1.0, March 2026</span>
+  <span>Classification: Protocol Architecture Specification</span>
+</div>
+
+</body>
+</html>
